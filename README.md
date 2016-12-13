@@ -1,24 +1,14 @@
 本文转载   原文链接：http://blog.fens.me/nodejs-express3/
 
-注意：本案列的运行需依赖mongonDBd服务的启动
+注意：本案例的运行需依赖mongonDBd服务的启动
+
 
 Nodejs开发框架Express3.0开发手记–从零开始
+
 前言
+
 Nodejs给Javascript赋予了服务端应用的生命，Jquery让Javascript成为浏览中开发的利器。 最近学习了Nodejs的Express3.0的开发框架，本来是按照“node.js开发指南”书中介绍，但“node.js开发指南”讲的是Express2.x的，从Express2.x到Express3.0自己模索中还是走了不少弯路的。写篇文章总结一下。
 
-关于作者
-张丹(Conan), 程序员Java,R,PHP,Javacript
-weibo：@Conan_Z
-blog: http://blog.fens.me
-email: bsspirit@gmail.com
-
-转载请注明出处：
-http://blog.fens.me/nodejs-express3/
-
-程序代码已经上传到github有需要的同学，自行下载。
-https://github.com/bsspirit/nodejs-demo
-
-nodejs intro
 
 从零开始nodejs系列文章
 
@@ -527,126 +517,4 @@ res.locals.user = req.session.user;
 var err = req.session.error;
 delete req.session.error;
 res.locals.message = '';
-if (err) res.locals.message = '<div class="alert alert-error">' + err + '</div>';
-next();
-});
-修改login.html页面，<%- message %>
-
-
-<% include header.html %>
-<div class="container-fluid">
-<form class="form-horizontal" method="post">
-<fieldset>
-<legend>用户登陆</legend>
-<%- message %>
-<div class="control-group">
-<label class="control-label" for="username">用户名</label>
-<div class="controls">
-<input type="text" class="input-xlarge" id="username" name="username" value="admin">
-</div>
-</div>
-<div class="control-group">
-<label class="control-label" for="password">密码</label>
-<div class="controls">
-<input type="password" class="input-xlarge" id="password" name="password" value="admin">
-</div>
-</div>
-<div class="form-actions">
-<button type="submit" class="btn btn-primary">登陆</button>
-</div>
-</fieldset>
-</form>
-</div>
-<% include footer.html %>
-修改routes/index.js，增加req.session.error
-
-
-exports.doLogin = function(req, res){
-var user={
-username:'admin',
-password:'admin'
-}
-if(req.body.username===user.username && req.body.password===user.password){
-req.session.user=user;
-return res.redirect('/home');
-} else {
-req.session.error='用户名或密码不正确';
-return res.redirect('/login');
-}
-};
-让我们来看看效果： http://localhost:3000/login 输入错误的和密码， 用户名：adminfe，密码：12121
-
-loginErr
-
- 
-
-9. 页面访问控制
-网站登陆部分按照我们的求已经完成了，但网站并不安全。
-
-localhost:3000/home，页面本来是登陆以后才访问的，现在我们不要登陆，直接在浏览器输入也可访问。
-
-页面报错了，提示<%= user.username %> 变量出错。
-
-
-GET /home?user==a 500 15ms
-TypeError: D:\workspace\project\nodejs-demo\views\home.html:2
-1| <% include header.html %>
->> 2| <h1>Welcome <%= user.username %>, 欢迎登陆！！</h1>
-3| <a claa="btn" href="/logout">退出</a>
-4| <% include header.html %>
-Cannot read property 'username' of null
-at eval (eval at <anonymous> (D:\workspace\project\nodejs-demo\node_modules\ejs\lib\ejs.js:
-at eval (eval at <anonymous> (D:\workspace\project\nodejs-demo\node_modules\ejs\lib\ejs.js:
-at D:\workspace\project\nodejs-demo\node_modules\ejs\lib\ejs.js:249:15
-at Object.exports.render (D:\workspace\project\nodejs-demo\node_modules\ejs\lib\ejs.js:287:
-at View.exports.renderFile [as engine] (D:\workspace\project\nodejs-demo\node_modules\ejs\l
-at View.render (D:\workspace\project\nodejs-demo\node_modules\express\lib\view.js:75:8)
-at Function.app.render (D:\workspace\project\nodejs-demo\node_modules\express\lib\applicati
-at ServerResponse.res.render (D:\workspace\project\nodejs-demo\node_modules\express\lib\res
-at exports.home (D:\workspace\project\nodejs-demo\routes\index.js:36:8)
-at callbacks (D:\workspace\project\nodejs-demo\node_modules\express\lib\router\index.js:161
-这个页面被打开发，因为没有user.username参数。我们避免这样的错误发生。
-
-还记录路由部分里说的get,post,all的作用吗？我现在要回到路由配置中，再做点事情。
-
-修改app.js文件
-
-
-app.all('/login', notAuthentication);
-app.get('/login', routes.login);
-app.post('/login', routes.doLogin);
-app.get('/logout', authentication);
-app.get('/logout', routes.logout);
-app.get('/home', authentication);
-app.get('/home', routes.home);
-访问控制：
-
-/ ，谁访问都行，没有任何控制
-/login，用all拦截所有访问/login的请求，先调用authentication，用户登陆检查
-/logout，用get拦截访问/login的请求，先调用notAuthentication，用户不登陆检查
-/home，用get拦截访问/home的请求，先调用Authentication，用户登陆检查
-修改app.js文件，增加authentication，notAuthentication两个方法
-
-
-function authentication(req, res, next) {
-if (!req.session.user) {
-req.session.error='请先登陆';
-return res.redirect('/login');
-}
-next();
-}
-function notAuthentication(req, res, next) {
-if (req.session.user) {
-req.session.error='已登陆';
-return res.redirect('/');
-}
-next();
-}
-配置好后，我们未登陆，直接访问localhost:3000/home时，就会跳到/login页面
-
-
-如果你也出现图片显示的内容，那么恭喜你了。
-
-Nodejs使用Express3.0框架的第一步你已经完成了，并且还使用了ejs,bootstrap,mongoose库的使用。
-
-希望此文对大家有所帮助。
+if (err) res.locals.message = '<div class="alert a
