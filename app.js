@@ -15,6 +15,8 @@ var store = new SessionStore({
 var routes = require('./routes');
 var users = require('./routes/user');
 
+var movie = require('./routes/movie');
+
 var app = express();
 
 // view engine setup
@@ -55,6 +57,11 @@ app.get('/logout', routes.logout);
 app.get('/home', authentication);
 app.get('/home', routes.home);
 
+app.get('/movie/add',movie.movieAdd);//增加
+app.post('/movie/add',movie.doMovieAdd);//提交
+app.get('/movie/:name',movie.movieAdd);//编辑查询
+app.get('/movie/json/:name',movie.movieJSON);//JSON数据
+
 //页面访问控制
 function authentication(req, res, next) {
     if (!req.session.user) {
@@ -72,6 +79,7 @@ function notAuthentication(req, res, next) {
 }
 
 /// catch 404 and forwarding to error handler
+
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
     err.status = 404;
